@@ -72,7 +72,7 @@ The app includes the following key screens:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/fitify.git
+git clone https://github.com/DevFusion-07/Fitify.git
 cd fitify
 ```
 

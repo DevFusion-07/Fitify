@@ -12,10 +12,15 @@ import '../../widgets/line_chart_widget.dart';
 import '../../widgets/bottom_navigation.dart';
 import '../../utils/responsive_utils.dart';
 import '../workout/workout_screen.dart';
+import '../workout/fullbody_workout_screen.dart';
+import '../workout/lowerbody_workout_screen.dart';
+import '../workout/ab_workout_screen.dart';
 import '../profile/profile_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../sleep/sleep_screen.dart';
 import '../meal/meal_screen.dart';
+import '../../providers/auth_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -181,57 +186,61 @@ class _HomeTabState extends State<HomeTab> with TickerProviderStateMixin {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              "Welcome Back,",
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            Text(
-              "Stefani Wong",
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-        Stack(
-          children: [
-            IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationScreen(),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Welcome Back,",
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    color: Colors.grey.shade600,
                   ),
-                );
-              },
-              icon: const Icon(Icons.notifications_outlined),
-            ),
-            Positioned(
-              right: 8,
-              top: 8,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
                 ),
-              ),
+                Text(
+                  authProvider.user?.name ?? "User",
+                  style: GoogleFonts.poppins(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+            Stack(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.notifications_outlined),
+                ),
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -916,7 +925,12 @@ class _HomeTabState extends State<HomeTab> with TickerProviderStateMixin {
           icon: WorkoutType.types['fullbody']!['icon'] as IconData,
           iconColor: WorkoutType.types['fullbody']!['color'] as Color,
           onTap: () {
-            // TODO: Navigate to workout details
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const FullbodyWorkoutScreen(),
+              ),
+            );
           },
         ),
         WorkoutItemWidget(
@@ -925,7 +939,12 @@ class _HomeTabState extends State<HomeTab> with TickerProviderStateMixin {
           icon: WorkoutType.types['lowerbody']!['icon'] as IconData,
           iconColor: WorkoutType.types['lowerbody']!['color'] as Color,
           onTap: () {
-            // TODO: Navigate to workout details
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const LowerBodyWorkoutScreen(),
+              ),
+            );
           },
         ),
         WorkoutItemWidget(
@@ -934,7 +953,10 @@ class _HomeTabState extends State<HomeTab> with TickerProviderStateMixin {
           icon: WorkoutType.types['ab']!['icon'] as IconData,
           iconColor: WorkoutType.types['ab']!['color'] as Color,
           onTap: () {
-            // TODO: Navigate to workout details
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AbWorkoutScreen()),
+            );
           },
         ),
       ],

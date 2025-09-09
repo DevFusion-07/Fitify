@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../utils/performance_utils.dart';
-import '../../utils/app_constants.dart';
 import 'fullbody_workout_screen.dart';
 import 'lowerbody_workout_screen.dart';
-import 'ab_workout_screen.dart';
-import '../workout_schedule/workout_schedule_screen.dart';
 
 class WorkoutScreen extends StatefulWidget {
   const WorkoutScreen({super.key});
@@ -20,15 +17,16 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   bool _isUpperbodyActive = false;
 
   // Time period selection (same as home screen)
-  String _selectedPeriod = "Weekly";
+  final String _selectedPeriod = "Weekly";
   final List<String> _periods = ["Daily", "Weekly", "Monthly"];
-  int _currentPeriodIndex = 1; // Start with Weekly
+  final int _currentPeriodIndex = 1; // Start with Weekly
 
   // Optimized scroll controller
-  final OptimizedScrollController _scrollController = OptimizedScrollController();
+  final OptimizedScrollController _scrollController =
+      OptimizedScrollController();
   double _headerHeight = 80.0;
-  double _minHeaderHeight = 60.0;
-  double _maxHeaderHeight = 80.0;
+  final double _minHeaderHeight = 60.0;
+  final double _maxHeaderHeight = 80.0;
 
   // Performance optimization: cache expensive calculations
   late final double _screenHeight = MediaQuery.of(context).size.height;
@@ -53,10 +51,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       if (_scrollController.position.pixels > 0) {
         setState(() {
           _headerHeight =
-              (_maxHeaderHeight - _scrollController.position.pixels * 0.5).clamp(
-                _minHeaderHeight,
-                _maxHeaderHeight,
-              );
+              (_maxHeaderHeight - _scrollController.position.pixels * 0.5)
+                  .clamp(_minHeaderHeight, _maxHeaderHeight);
         });
       } else {
         setState(() {
@@ -163,16 +159,27 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                           right: 0,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: const [
-                              'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'
-                            ].map((day) => OptimizedText(
-                              day,
-                              style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                color: Colors.white.withOpacity(0.8),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            )).toList(),
+                            children:
+                                const [
+                                      'Sun',
+                                      'Mon',
+                                      'Tue',
+                                      'Wed',
+                                      'Thu',
+                                      'Fri',
+                                      'Sat',
+                                    ]
+                                    .map(
+                                      (day) => OptimizedText(
+                                        day,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 10,
+                                          color: Colors.white.withOpacity(0.8),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
                           ),
                         ),
                       ],
@@ -295,18 +302,18 @@ class WorkoutChartPainter extends OptimizedCustomPainter {
     final path = Path();
     final data = [30, 45, 35, 60, 40, 55, 50];
     final maxValue = data.reduce((a, b) => a > b ? a : b).toDouble();
-    
+
     for (int i = 0; i < data.length; i++) {
       final x = (size.width / (data.length - 1)) * i;
       final y = size.height - (data[i] / maxValue) * size.height;
-      
+
       if (i == 0) {
         path.moveTo(x, y);
       } else {
         path.lineTo(x, y);
       }
     }
-    
+
     canvas.drawPath(path, paint);
   }
 }

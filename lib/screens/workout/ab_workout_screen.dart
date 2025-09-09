@@ -58,7 +58,7 @@ class _AbWorkoutScreenState extends State<AbWorkoutScreen> {
     ExerciseData(
         "Drink Water",
         "00:20",
-        "assets/images/exercises/dring_water.png",
+        "assets/images/exercises/rest_drink.png",
       )
       ..difficulty = "Beginner"
       ..caloriesPerSet =

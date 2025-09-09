@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import '../onboarding/onboarding_screen.dart';
+import '../home/home_screen.dart';
+import '../../providers/auth_provider.dart';
 import 'dart:math' as math;
 
 class SplashScreen extends StatefulWidget {
@@ -98,13 +100,21 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 500));
     _loadingController.forward();
 
-    // Navigate to onboarding after all animations
+    // Navigate based on authentication status after all animations
     await Future.delayed(const Duration(milliseconds: 3500));
     if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-      );
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.isLoggedIn) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+        );
+      }
     }
   }
 

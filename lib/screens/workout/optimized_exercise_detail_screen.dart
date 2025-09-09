@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../utils/performance_utils.dart';
-import '../../utils/app_constants.dart';
 
 class OptimizedExerciseDetailScreen extends StatefulWidget {
   final String name;
@@ -406,7 +405,7 @@ class _OptimizedExerciseDetailScreenState
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

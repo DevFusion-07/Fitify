@@ -35,7 +35,7 @@ class _FullbodyWorkoutScreenState extends State<FullbodyWorkoutScreen> {
     ExerciseData(
         "Jumping Jacks",
         "00:30",
-        "assets/images/exercises/jumping_jacks.png",
+        "assets/images/exercises/jumping_jack.png",
       )
       ..difficulty = "Beginner"
       ..caloriesPerSet =
@@ -128,7 +128,7 @@ class _FullbodyWorkoutScreenState extends State<FullbodyWorkoutScreen> {
         "Pump your arms as if you're running in place.",
         "Maintain a steady rhythm and engage your core.",
       ],
-    ExerciseData("Burpees", "00:50", "assets/icons/exercise_icons.svg")
+    ExerciseData("Burpees", "00:50", "assets/images/exercises/rest_drink.png")
       ..difficulty = "Advanced"
       ..caloriesPerSet =
           12 // ~12 calories per 10 reps
@@ -141,7 +141,7 @@ class _FullbodyWorkoutScreenState extends State<FullbodyWorkoutScreen> {
     ExerciseData(
         "Mountain Climbers",
         "00:40",
-        "assets/icons/exercise_icons.svg",
+        "assets/images/exercises/crunches.png",
       )
       ..difficulty = "Intermediate"
       ..caloriesPerSet =
@@ -152,7 +152,7 @@ class _FullbodyWorkoutScreenState extends State<FullbodyWorkoutScreen> {
         "Keep your core engaged and maintain a steady pace.",
         "Continue alternating legs in a running motion.",
       ],
-    ExerciseData("Lunges", "00:45", "assets/icons/exercise_icons.svg")
+    ExerciseData("Lunges", "00:45", "assets/images/exercises/hip_thrust.png")
       ..difficulty = "Beginner"
       ..caloriesPerSet =
           6 // ~6 calories per 10 reps
@@ -176,7 +176,11 @@ class _FullbodyWorkoutScreenState extends State<FullbodyWorkoutScreen> {
         "Curl the weights towards your shoulders.",
         "Lower back down with control and repeat.",
       ],
-    ExerciseData("Tricep Dips", "00:40", "assets/icons/exercise_icons.svg")
+    ExerciseData(
+        "Tricep Dips",
+        "00:40",
+        "assets/images/exercises/arm_rises.png",
+      )
       ..difficulty = "Intermediate"
       ..caloriesPerSet =
           5 // ~5 calories per 10 reps
@@ -227,7 +231,7 @@ class _FullbodyWorkoutScreenState extends State<FullbodyWorkoutScreen> {
     ExerciseData(
         "Drink Water",
         "00:15",
-        "assets/images/exercises/dring_water.png",
+        "assets/images/exercises/rest_drink.png",
       )
       ..difficulty = "Beginner"
       ..caloriesPerSet =
@@ -237,6 +241,20 @@ class _FullbodyWorkoutScreenState extends State<FullbodyWorkoutScreen> {
         "Drink 8-12 ounces of water.",
         "Rest and prepare for next exercise.",
         "Stay hydrated throughout your workout.",
+      ],
+    ExerciseData(
+        "Hamstring Stretch",
+        "00:30",
+        "assets/images/exercises/hamstring_stretch.png",
+      )
+      ..difficulty = "Beginner"
+      ..caloriesPerSet =
+          1 // ~1 calorie per 10 seconds
+      ..steps = [
+        "Sit on the floor with one leg extended.",
+        "Bend the other leg and place foot against inner thigh.",
+        "Reach forward towards your extended foot.",
+        "Hold the stretch and breathe deeply.",
       ],
   ];
 
@@ -281,7 +299,7 @@ class _FullbodyWorkoutScreenState extends State<FullbodyWorkoutScreen> {
       _exerciseWithMeta(
         name: 'Jumping Jack',
         duration: '12x',
-        imagePath: 'assets/images/exercises/jumping_jacks.png',
+        imagePath: 'assets/images/exercises/jumping_jack.png',
       ),
       _exerciseWithMeta(
         name: 'Skipping',
@@ -301,7 +319,7 @@ class _FullbodyWorkoutScreenState extends State<FullbodyWorkoutScreen> {
       _exerciseWithMeta(
         name: 'Rest and Drink',
         duration: '02:00',
-        imagePath: 'assets/images/exercises/dring_water.png',
+        imagePath: 'assets/images/exercises/rest_drink.png',
       ),
     ];
 
@@ -319,7 +337,7 @@ class _FullbodyWorkoutScreenState extends State<FullbodyWorkoutScreen> {
       _exerciseWithMeta(
         name: 'Rest and Drink',
         duration: '02:00',
-        imagePath: 'assets/images/exercises/dring_water.png',
+        imagePath: 'assets/images/exercises/rest_drink.png',
       ),
     ];
 
@@ -719,7 +737,10 @@ class _FullbodyWorkoutScreenState extends State<FullbodyWorkoutScreen> {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              _buildEquipmentCard("Barbell", EquipmentIcons.getIconPath("Barbell")),
+              _buildEquipmentCard(
+                "Barbell",
+                EquipmentIcons.getIconPath("Barbell"),
+              ),
               const SizedBox(width: 12),
               _buildEquipmentCard(
                 "Skipping Rope",

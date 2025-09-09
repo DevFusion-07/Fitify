@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
 import '../utils/app_constants.dart';
@@ -47,9 +46,7 @@ class OptimizedListView extends StatelessWidget {
       physics: physics,
       itemCount: children.length,
       itemBuilder: (context, index) {
-        return RepaintBoundary(
-          child: children[index],
-        );
+        return RepaintBoundary(child: children[index]);
       },
     );
   }
@@ -92,9 +89,7 @@ class OptimizedGridView extends StatelessWidget {
       ),
       itemCount: children.length,
       itemBuilder: (context, index) {
-        return RepaintBoundary(
-          child: children[index],
-        );
+        return RepaintBoundary(child: children[index]);
       },
     );
   }
@@ -138,20 +133,20 @@ class OptimizedImage extends StatelessWidget {
           );
         },
         errorBuilder: (context, error, stackTrace) {
-          return errorWidget ?? 
-            Container(
-              width: width,
-              height: height,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.image_not_supported,
-                color: Colors.grey.shade400,
-                size: 32,
-              ),
-            );
+          return errorWidget ??
+              Container(
+                width: width,
+                height: height,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.image_not_supported,
+                  color: Colors.grey.shade400,
+                  size: 32,
+                ),
+              );
         },
       ),
     );
@@ -229,11 +224,7 @@ class PerformanceMonitor extends StatefulWidget {
   final Widget child;
   final String? name;
 
-  const PerformanceMonitor({
-    super.key,
-    required this.child,
-    this.name,
-  });
+  const PerformanceMonitor({super.key, required this.child, this.name});
 
   @override
   State<PerformanceMonitor> createState() => _PerformanceMonitorState();
@@ -251,12 +242,15 @@ class _PerformanceMonitorState extends State<PerformanceMonitor> {
   @override
   Widget build(BuildContext context) {
     final buildTime = DateTime.now().difference(_buildStart).inMilliseconds;
-    
+
     // Log slow builds in debug mode
-    if (buildTime > 16) { // 60 FPS = 16ms per frame
-      debugPrint('Performance warning: ${widget.name ?? 'Widget'} took ${buildTime}ms to build');
+    if (buildTime > 16) {
+      // 60 FPS = 16ms per frame
+      debugPrint(
+        'Performance warning: ${widget.name ?? 'Widget'} took ${buildTime}ms to build',
+      );
     }
-    
+
     return RepaintBoundary(child: widget.child);
   }
 }
@@ -339,16 +333,15 @@ class OptimizedButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (icon != null) ...[
-                icon!,
-                const SizedBox(width: 8),
-              ],
+              if (icon != null) ...[icon!, const SizedBox(width: 8)],
               OptimizedText(
                 text,
-                style: textStyle ?? GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                ),
+                style:
+                    textStyle ??
+                    GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
               ),
             ],
           ),
@@ -390,14 +383,16 @@ class OptimizedCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: backgroundColor ?? Colors.white,
             borderRadius: BorderRadius.circular(borderRadius ?? 12),
-            boxShadow: boxShadow ?? [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            boxShadow:
+                boxShadow ??
+                [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
           ),
           child: child,
         ),
@@ -463,16 +458,22 @@ abstract class OptimizedCustomPainter extends CustomPainter {
 class PerformanceUtils {
   // Debounce function to limit frequent calls
   static Timer? _debounceTimer;
-  
-  static void debounce(VoidCallback callback, {Duration duration = const Duration(milliseconds: 300)}) {
+
+  static void debounce(
+    VoidCallback callback, {
+    Duration duration = const Duration(milliseconds: 300),
+  }) {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(duration, callback);
   }
 
   // Throttle function to limit calls to a maximum frequency
   static DateTime? _lastCall;
-  
-  static void throttle(VoidCallback callback, {Duration duration = const Duration(milliseconds: 100)}) {
+
+  static void throttle(
+    VoidCallback callback, {
+    Duration duration = const Duration(milliseconds: 100),
+  }) {
     final now = DateTime.now();
     if (_lastCall == null || now.difference(_lastCall!) >= duration) {
       callback();

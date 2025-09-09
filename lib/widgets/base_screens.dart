@@ -257,7 +257,7 @@ class ListSection extends StatelessWidget {
                   AppSpacing.gapMd,
               ],
             );
-          }).toList(),
+          }),
         ],
       ),
     );

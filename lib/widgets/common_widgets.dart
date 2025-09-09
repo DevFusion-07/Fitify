@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../utils/responsive_utils.dart';
 
 // Common card widget with customizable styling
 class CommonCard extends StatelessWidget {
@@ -364,7 +363,7 @@ class ImageCard extends StatelessWidget {
           Positioned(
             top: 0,
             right: 0,
-            child: Container(
+            child: SizedBox(
               width: 140,
               height: 140,
               child: Image.asset(imagePath, fit: BoxFit.contain),

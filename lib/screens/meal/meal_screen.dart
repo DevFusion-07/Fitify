@@ -3,6 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/line_chart_widget.dart';
 import '../../widgets/common_widgets.dart';
 import '../../utils/app_constants.dart';
+import 'breakfast_screen.dart';
+import 'lunch_screen.dart';
+import 'dinner_screen.dart';
+import 'meal_schedule_screen.dart';
 
 class MealScreen extends StatefulWidget {
   const MealScreen({super.key});
@@ -149,8 +153,11 @@ class _MealScreenState extends State<MealScreen> {
           CommonButton(
             text: 'Check',
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Opening daily meal schedule...')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MealScheduleScreen(),
+                ),
               );
             },
           ),
@@ -216,6 +223,14 @@ class _MealScreenState extends State<MealScreen> {
                 backgroundColor:
                     AppData.mealCards['Breakfast']!['backgroundColor'],
                 buttonColor: AppData.mealCards['Breakfast']!['buttonColor'],
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BreakfastScreen(),
+                    ),
+                  );
+                },
               ),
               SizedBox(width: AppDimensions.cardSpacing),
               ImageCard(
@@ -224,6 +239,14 @@ class _MealScreenState extends State<MealScreen> {
                 imagePath: AppData.mealCards['Lunch']!['imagePath'],
                 backgroundColor: AppData.mealCards['Lunch']!['backgroundColor'],
                 buttonColor: AppData.mealCards['Lunch']!['buttonColor'],
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LunchScreen(),
+                    ),
+                  );
+                },
               ),
               SizedBox(width: AppDimensions.cardSpacing),
               ImageCard(
@@ -233,6 +256,14 @@ class _MealScreenState extends State<MealScreen> {
                 backgroundColor:
                     AppData.mealCards['Dinner']!['backgroundColor'],
                 buttonColor: AppData.mealCards['Dinner']!['buttonColor'],
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DinnerScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),

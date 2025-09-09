@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+// import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/styled_dropdown.dart';
+import 'package:provider/provider.dart';
+import '../../providers/activity_provider.dart';
 
 class PersonalDataScreen extends StatefulWidget {
   const PersonalDataScreen({super.key});
@@ -30,21 +33,42 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
   }
 
   void _loadUserData() {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final user = authProvider.user;
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final user = authProvider.user;
 
-    if (user != null) {
-      _nameController.text = user.name;
-      _emailController.text = user.email;
-      _selectedGender = user.gender;
-      _selectedDateOfBirth = user.dateOfBirth;
+      if (user != null) {
+        _nameController.text = user.name;
+        _emailController.text = user.email;
+        // Convert gender to lowercase to match dropdown values
+        final gender = user.gender?.toLowerCase();
+        if (gender == 'male' || gender == 'female' || gender == 'other') {
+          _selectedGender = gender;
+        } else {
+          _selectedGender = null;
+        }
+        _selectedDateOfBirth = user.dateOfBirth;
 
-      if (user.weight != null) {
-        _weightController.text = user.weight.toString();
+        if (user.weight != null) {
+          _weightController.text = user.weight.toString();
+        }
+        if (user.height != null) {
+          final cm = user.height!;
+          // Use inches when _isHeightInFeet=false; allow switching to feet later
+          _heightController.text =
+              (_isHeightInFeet
+                      ? (cm / 30.48).toStringAsFixed(1)
+                      : (cm / 2.54).toStringAsFixed(0))
+                  .toString();
+        }
       }
-      if (user.height != null) {
-        _heightController.text = user.height.toString();
-      }
+    } catch (e) {
+      print('Error loading user data: $e');
+      // Set default values if there's an error
+      _nameController.text = '';
+      _emailController.text = '';
+      _selectedGender = null;
+      _selectedDateOfBirth = null;
     }
   }
 
@@ -253,7 +277,19 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
-            onTap: () => setState(() => _isHeightInFeet = false),
+            onTap: () {
+              setState(() {
+                // Convert current value to cm based on current unit
+                final raw = double.tryParse(_heightController.text);
+                double cm = 0;
+                if (raw != null) {
+                  cm = _isHeightInFeet ? raw * 30.48 : raw * 2.54;
+                }
+                _isHeightInFeet = false;
+                // Display inches
+                _heightController.text = (cm / 2.54).toStringAsFixed(0);
+              });
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
@@ -273,7 +309,18 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
             ),
           ),
           GestureDetector(
-            onTap: () => setState(() => _isHeightInFeet = true),
+            onTap: () {
+              setState(() {
+                final raw = double.tryParse(_heightController.text);
+                double cm = 0;
+                if (raw != null) {
+                  cm = _isHeightInFeet ? raw * 30.48 : raw * 2.54;
+                }
+                _isHeightInFeet = true;
+                // Display decimal feet
+                _heightController.text = (cm / 30.48).toStringAsFixed(1);
+              });
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
@@ -300,22 +347,28 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
   void _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-    // Convert weight to kg if needed
-    double? weight = double.tryParse(_weightController.text);
-    if (weight != null && !_isWeightInKg) {
-      weight = weight * 0.453592; // Convert lbs to kg
-    }
-
-    // Convert height to cm if needed
-    double? height = double.tryParse(_heightController.text);
-    if (height != null && _isHeightInFeet) {
-      height = height * 2.54; // Convert inches to cm
-    }
-
     try {
-      await authProvider.updateProfile(
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+      // Convert weight to kg if needed
+      double? weight = double.tryParse(_weightController.text);
+      if (weight != null && !_isWeightInKg) {
+        weight = weight * 0.453592; // Convert lbs to kg
+      }
+
+      // Convert height to cm if needed
+      double? height = double.tryParse(_heightController.text);
+      if (height != null) {
+        if (_isHeightInFeet) {
+          // Decimal feet to cm
+          height = height * 30.48;
+        } else {
+          // Inches to cm
+          height = height * 2.54;
+        }
+      }
+
+      final success = await authProvider.updateProfile(
         name: _nameController.text,
         gender: _selectedGender,
         dateOfBirth: _selectedDateOfBirth,
@@ -324,13 +377,27 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Personal data updated successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context);
+        if (success) {
+          // Sync ActivityProvider with updated values
+          final activity = context.read<ActivityProvider>();
+          activity.updateHeightWeight(heightCm: height, weightKg: weight);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Personal data updated successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Error updating personal data: ${authProvider.error ?? "Unknown error"}',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -364,178 +431,183 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Personal Information Section
-              CommonCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Personal Information',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Name Field
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: InputDecoration(
-                        labelText: 'Full Name',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF6B73FF),
+      body: Consumer<AuthProvider>(
+        builder: (context, authProvider, child) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Personal Information Section
+                  CommonCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Personal Information',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
                           ),
                         ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your name';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
+                        const SizedBox(height: 20),
 
-                    // Email Field (Read-only)
-                    TextFormField(
-                      controller: _emailController,
-                      readOnly: true,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF6B73FF),
-                          ),
-                        ),
-                        suffixIcon: const Icon(Icons.lock, color: Colors.grey),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Gender Dropdown
-                    DropdownButtonFormField<String>(
-                      value: _selectedGender,
-                      decoration: InputDecoration(
-                        labelText: 'Gender',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF6B73FF),
-                          ),
-                        ),
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 'male', child: Text('Male')),
-                        DropdownMenuItem(
-                          value: 'female',
-                          child: Text('Female'),
-                        ),
-                        DropdownMenuItem(value: 'other', child: Text('Other')),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedGender = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Date of Birth Field
-                    GestureDetector(
-                      onTap: _selectDateOfBirth,
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_today,
-                              color: Colors.grey.shade600,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              _selectedDateOfBirth != null
-                                  ? '${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.year}'
-                                  : 'Date of Birth',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                color: _selectedDateOfBirth != null
-                                    ? Colors.black87
-                                    : Colors.grey.shade600,
+                        // Name Field
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: InputDecoration(
+                            labelText: 'Full Name',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
                               ),
                             ),
-                          ],
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF6B73FF),
+                              ),
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your name';
+                            }
+                            return null;
+                          },
                         ),
-                      ),
+                        const SizedBox(height: 16),
+
+                        // Email Field (Read-only)
+                        TextFormField(
+                          controller: _emailController,
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: 'Email',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF6B73FF),
+                              ),
+                            ),
+                            suffixIcon: const Icon(
+                              Icons.lock,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Gender Dropdown
+                        StyledDropdown<String>(
+                          value: _selectedGender,
+                          hintText: 'Gender',
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'male',
+                              child: Text('Male'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'female',
+                              child: Text('Female'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'other',
+                              child: Text('Other'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedGender = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Date of Birth Field
+                        GestureDetector(
+                          onTap: _selectDateOfBirth,
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  color: Colors.grey.shade600,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  _selectedDateOfBirth != null
+                                      ? '${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.year}'
+                                      : 'Date of Birth',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    color: _selectedDateOfBirth != null
+                                        ? Colors.black87
+                                        : Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
 
-              const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-              // Physical Information Section
-              CommonCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Physical Information',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
+                  // Physical Information Section
+                  CommonCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Physical Information',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        _buildWeightField(),
+                        const SizedBox(height: 20),
+                        _buildHeightField(),
+                      ],
                     ),
-                    const SizedBox(height: 20),
+                  ),
 
-                    _buildWeightField(),
-                    const SizedBox(height: 20),
-                    _buildHeightField(),
-                  ],
-                ),
+                  const SizedBox(height: 30),
+
+                  // Save Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: CommonButton(
+                      text: 'Save Changes',
+                      onPressed: _handleSave,
+                    ),
+                  ),
+                ],
               ),
-
-              const SizedBox(height: 30),
-
-              // Save Button
-              SizedBox(
-                width: double.infinity,
-                child: CommonButton(
-                  text: 'Save Changes',
-                  onPressed: _handleSave,
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

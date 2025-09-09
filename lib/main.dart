@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'screens/splash/splash_screen.dart';
-import 'utils/performance_utils.dart';
+import 'providers/activity_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
 import 'providers/auth_provider.dart';
+import 'utils/performance_utils.dart';
 
 void main() {
   runApp(const FitifyApp());
@@ -14,8 +15,30 @@ class FitifyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => AuthProvider()..initialize(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => AuthProvider()..initialize(),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, ActivityProvider>(
+          create: (_) => ActivityProvider(),
+          update: (_, auth, activity) {
+            final instance = activity ?? ActivityProvider();
+            final user = auth.user;
+            if (user != null) {
+              final height = user.height;
+              final weight = user.weight;
+              if (height != null || weight != null) {
+                instance.updateHeightWeight(
+                  heightCm: height ?? instance.heightCm,
+                  weightKg: weight ?? instance.weightKg,
+                );
+              }
+            }
+            return instance;
+          },
+        ),
+      ],
       child: MaterialApp(
         title: 'Fitify',
         debugShowCheckedModeBanner: false,

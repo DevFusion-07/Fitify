@@ -6,6 +6,8 @@ class AuthService {
   static const String _userKey = 'current_user';
   static const String _isLoggedInKey = 'is_logged_in';
   static const String _usersKey = 'registered_users';
+  static const String _rememberKey = 'remember_device';
+  static const String _onboardingKey = 'onboarding_seen';
 
   // Singleton pattern
   static final AuthService _instance = AuthService._internal();
@@ -27,7 +29,12 @@ class AuthService {
   // Load user data from SharedPreferences
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
-    _isLoggedIn = prefs.getBool(_isLoggedInKey) ?? false;
+    final remember = prefs.getBool(_rememberKey) ?? false;
+    _isLoggedIn = remember ? (prefs.getBool(_isLoggedInKey) ?? false) : false;
+    // If user has logged in before, mark onboarding as seen
+    if (_isLoggedIn) {
+      await prefs.setBool(_onboardingKey, true);
+    }
 
     if (_isLoggedIn) {
       final userJson = prefs.getString(_userKey);
@@ -39,9 +46,15 @@ class AuthService {
   }
 
   // Save user data to SharedPreferences
-  Future<void> _saveUserData() async {
+  Future<void> _saveUserData({bool? remember}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_isLoggedInKey, _isLoggedIn);
+    if (remember != null) {
+      await prefs.setBool(_rememberKey, remember);
+    }
+    if (_isLoggedIn) {
+      await prefs.setBool(_onboardingKey, true);
+    }
 
     if (_currentUser != null) {
       final userMap = _currentUser!.toMap();
@@ -76,7 +89,7 @@ class AuthService {
       // Set as current user and log in
       _currentUser = newUser;
       _isLoggedIn = true;
-      await _saveUserData();
+      await _saveUserData(remember: true);
       return true;
     } catch (e) {
       print('Registration error: $e');
@@ -85,7 +98,11 @@ class AuthService {
   }
 
   // Login user
-  Future<bool> login({required String email, required String password}) async {
+  Future<bool> login({
+    required String email,
+    required String password,
+    bool remember = false,
+  }) async {
     try {
       // Get registered users
       final registeredUsers = await _getRegisteredUsers();
@@ -128,7 +145,7 @@ class AuthService {
       // Set as current user and log in
       _currentUser = user;
       _isLoggedIn = true;
-      await _saveUserData();
+      await _saveUserData(remember: remember);
 
       return true;
     } catch (e) {

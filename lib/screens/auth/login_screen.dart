@@ -19,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+  bool _rememberDevice = true;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -62,6 +63,7 @@ class _LoginScreenState extends State<LoginScreen>
       final success = await authProvider.login(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        remember: _rememberDevice,
       );
 
       setState(() {
@@ -193,8 +195,40 @@ class _LoginScreenState extends State<LoginScreen>
           _buildEmailField(),
           const SizedBox(height: 20),
           _buildPasswordField(),
+          const SizedBox(height: 12),
+          _buildRememberDevice(),
         ],
       ),
+    );
+  }
+
+  Widget _buildRememberDevice() {
+    return Row(
+      children: [
+        Checkbox(
+          value: _rememberDevice,
+          onChanged: (val) {
+            setState(() {
+              _rememberDevice = val ?? false;
+            });
+          },
+          activeColor: Colors.white,
+          checkColor: const Color(0xFF667eea),
+          side: BorderSide(color: Colors.white.withOpacity(0.7)),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Remember this device',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.white.withOpacity(0.9),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

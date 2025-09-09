@@ -220,27 +220,34 @@ class _WorkoutProgressScreenState extends State<WorkoutProgressScreen> {
                   ),
                   const SizedBox(height: 20),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildStatItem(
-                        '${stats['totalWorkouts']}',
-                        'Workouts',
-                        Icons.fitness_center,
+                      Expanded(
+                        child: _buildStatItem(
+                          '${stats['totalWorkouts']}',
+                          'Workouts',
+                          Icons.fitness_center,
+                        ),
                       ),
-                      _buildStatItem(
-                        '${stats['totalDuration']}m',
-                        'Duration',
-                        Icons.access_time,
+                      Expanded(
+                        child: _buildStatItem(
+                          '${stats['totalDuration']}m',
+                          'Duration',
+                          Icons.access_time,
+                        ),
                       ),
-                      _buildStatItem(
-                        '${stats['totalCalories']}',
-                        'Calories',
-                        Icons.local_fire_department,
+                      Expanded(
+                        child: _buildStatItem(
+                          '${stats['totalCalories']}',
+                          'Calories',
+                          Icons.local_fire_department,
+                        ),
                       ),
-                      _buildStatItem(
-                        '${stats['activeDays']}',
-                        'Active Days',
-                        Icons.calendar_today,
+                      Expanded(
+                        child: _buildStatItem(
+                          '${stats['activeDays']}',
+                          'Active Days',
+                          Icons.calendar_today,
+                        ),
                       ),
                     ],
                   ),
@@ -345,63 +352,80 @@ class _WorkoutProgressScreenState extends State<WorkoutProgressScreen> {
   }
 
   Widget _buildWorkoutCalendar() {
-    return SizedBox(
-      height: 200,
-      child: GridView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 7,
-          childAspectRatio: 1,
-        ),
-        itemCount: 7,
-        itemBuilder: (context, index) {
-          final data = _workoutData[index];
-          final date = data['date'] as DateTime;
-          final hasWorkout = data['workouts'] > 0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Compute a square tile size for 7 columns, accounting for small margins
+        final totalHorizontalMargin =
+            2.0 * 2.0 * 7; // left+right margin per tile
+        final availableWidth = constraints.maxWidth - totalHorizontalMargin;
+        final tileSize = (availableWidth / 7).clamp(28.0, 48.0);
 
-          return Container(
-            margin: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: hasWorkout
-                  ? const Color(0xFF6B73FF)
-                  : Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(8),
+        return SizedBox(
+          height: tileSize + 20, // tile plus a little breathing room
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              childAspectRatio: 1,
+              mainAxisSpacing: 0,
+              crossAxisSpacing: 0,
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _getDayName(date.weekday),
-                  style: GoogleFonts.poppins(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: hasWorkout ? Colors.white : Colors.grey.shade600,
-                  ),
+            itemCount: 7,
+            itemBuilder: (context, index) {
+              final data = _workoutData[index];
+              final date = data['date'] as DateTime;
+              final hasWorkout = data['workouts'] > 0;
+
+              return Container(
+                margin: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: hasWorkout
+                      ? const Color(0xFF6B73FF)
+                      : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '${date.day}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: hasWorkout ? Colors.white : Colors.black87,
-                  ),
-                ),
-                if (hasWorkout)
-                  Container(
-                    margin: const EdgeInsets.only(top: 2),
-                    width: 6,
-                    height: 6,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _getDayName(date.weekday),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: hasWorkout ? Colors.white : Colors.grey.shade600,
+                      ),
                     ),
-                  ),
-              ],
-            ),
-          );
-        },
-      ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${date.day}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: hasWorkout ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    if (hasWorkout)
+                      Container(
+                        margin: const EdgeInsets.only(top: 1),
+                        width: 5,
+                        height: 5,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 

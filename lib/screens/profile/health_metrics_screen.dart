@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/activity_provider.dart';
 import '../../widgets/common_widgets.dart';
 
 class HealthMetricsScreen extends StatefulWidget {
@@ -212,10 +213,12 @@ class _HealthMetricsScreenState extends State<HealthMetricsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildCurrentMetric(
-                        '${currentMetrics['weight']} kg',
-                        'Weight',
-                        Icons.monitor_weight,
+                      Consumer<ActivityProvider>(
+                        builder: (context, activity, _) => _buildCurrentMetric(
+                          '${activity.weightKg.toStringAsFixed(1)} kg',
+                          'Weight',
+                          Icons.monitor_weight,
+                        ),
                       ),
                       _buildCurrentMetric(
                         '${currentMetrics['bodyFat']}%',
@@ -328,13 +331,15 @@ class _HealthMetricsScreenState extends State<HealthMetricsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildTrendItem(
-                    'Weight',
-                    '${currentMetrics['weight']} kg',
-                    trends['weightChange'],
-                    'kg',
-                    Icons.monitor_weight,
-                    const Color(0xFF6B73FF),
+                  Consumer<ActivityProvider>(
+                    builder: (context, activity, _) => _buildTrendItem(
+                      'Weight',
+                      '${activity.weightKg.toStringAsFixed(1)} kg',
+                      trends['weightChange'],
+                      'kg',
+                      Icons.monitor_weight,
+                      const Color(0xFF6B73FF),
+                    ),
                   ),
                   _buildTrendItem(
                     'Body Fat',
@@ -410,12 +415,14 @@ class _HealthMetricsScreenState extends State<HealthMetricsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildGoalItem(
-                    'Weight Goal',
-                    'Target: 70 kg',
-                    'Current: ${currentMetrics['weight']} kg',
-                    0.8,
-                    const Color(0xFF6B73FF),
+                  Consumer<ActivityProvider>(
+                    builder: (context, activity, _) => _buildGoalItem(
+                      'Weight Goal',
+                      'Target: 70 kg',
+                      'Current: ${activity.weightKg.toStringAsFixed(1)} kg',
+                      0.8,
+                      const Color(0xFF6B73FF),
+                    ),
                   ),
                   _buildGoalItem(
                     'Body Fat Goal',

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../onboarding/onboarding_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../auth/login_screen.dart';
 import '../home/home_screen.dart';
 import '../../providers/auth_provider.dart';
 import 'dart:math' as math;
@@ -104,10 +106,20 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 3500));
     if (mounted) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      // Ensure auth state is loaded from storage before deciding navigation
+      await authProvider.initialize();
+      final prefs = await SharedPreferences.getInstance();
+      final onboardingSeen = prefs.getBool('onboarding_seen') ?? false;
+
       if (authProvider.isLoggedIn) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else if (onboardingSeen) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
       } else {
         Navigator.pushReplacement(

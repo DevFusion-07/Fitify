@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../providers/auth_provider.dart';
+import '../../providers/activity_provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -46,7 +47,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _weightController.text = user.weight!.toStringAsFixed(1);
       }
       if (user.height != null) {
-        _heightController.text = user.height!.toStringAsFixed(0);
+        final cm = user.height!;
+        // Initialize display based on current unit (inches by default when isHeightInFeet=false)
+        final display = isHeightInFeet
+            ? (cm / 30.48).toStringAsFixed(1) // feet (allow decimals e.g. 5.5)
+            : (cm / 2.54).toStringAsFixed(0); // inches
+        _heightController.text = display;
       }
 
       // Load existing profile image if it exists
@@ -256,7 +262,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       // Convert to standard units (kg and cm) before saving
       double finalWeight = weight;
-      double finalHeight = height;
+      double finalHeight;
 
       if (!isWeightInKg) {
         // Convert pounds to kg
@@ -264,10 +270,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       if (isHeightInFeet) {
-        // Convert feet to inches, then to cm
-        finalHeight = height * 12 * 2.54;
+        // Height field in decimal feet (e.g., 5.5 ft)
+        finalHeight = height * 30.48;
       } else {
-        // Convert inches to cm
+        // Height field in inches
         finalHeight = height * 2.54;
       }
 
@@ -281,6 +287,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
 
       if (success) {
+        // Sync ActivityProvider with updated values
+        context.read<ActivityProvider>().updateHeightWeight(
+          heightCm: finalHeight,
+          weightKg: finalWeight,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Profile updated successfully!"),
@@ -695,23 +706,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               isFeet: isHeightInFeet,
               onToggle: (value) {
                 setState(() {
-                  isHeightInFeet = value;
-                  // Convert height if needed
-                  if (_heightController.text.isNotEmpty) {
-                    final currentHeight = double.tryParse(
-                      _heightController.text,
-                    );
-                    if (currentHeight != null) {
-                      if (isHeightInFeet) {
-                        // Convert from inches to feet
-                        _heightController.text = (currentHeight / 12)
-                            .toStringAsFixed(1);
-                      } else {
-                        // Convert from feet to inches
-                        _heightController.text = (currentHeight * 12)
-                            .toStringAsFixed(0);
-                      }
+                  // Interpret current text according to current unit before switching
+                  final raw = double.tryParse(_heightController.text);
+                  double cmFromField;
+                  if (raw == null) {
+                    cmFromField = 0;
+                  } else {
+                    if (isHeightInFeet) {
+                      // Currently feet -> convert to cm
+                      cmFromField = raw * 30.48;
+                    } else {
+                      // Currently inches -> convert to cm
+                      cmFromField = raw * 2.54;
                     }
+                  }
+
+                  // Apply toggle
+                  isHeightInFeet = value;
+
+                  // Now set display in new unit
+                  if (isHeightInFeet) {
+                    // Show in decimal feet (e.g., 5.5)
+                    _heightController.text = (cmFromField / 30.48)
+                        .toStringAsFixed(1);
+                  } else {
+                    // Show in inches (integer preferred)
+                    _heightController.text = (cmFromField / 2.54)
+                        .toStringAsFixed(0);
                   }
                 });
               },

@@ -2,25 +2,29 @@ import '../activity_tracker/activity_tracker_screen.dart';
 import '../../widgets/circular_progress_indicator.dart';
 import '../../widgets/staggered_animation_widget.dart';
 import '../../widgets/calories_progress_widget.dart';
+import '../workout/lowerbody_workout_screen.dart';
 import '../notification/notification_screen.dart';
 import '../../widgets/sleep_pattern_widget.dart';
-import '../../widgets/workout_item_widget.dart';
+import '../workout/fullbody_workout_screen.dart';
+import '../profile/workout_progress_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../widgets/workout_item_widget.dart';
+import '../../providers/activity_provider.dart';
 import '../../widgets/water_intake_widget.dart';
 import '../workout/workout_tracker_screen.dart';
+import '../profile/health_metrics_screen.dart';
 import '../../widgets/line_chart_widget.dart';
 import '../../widgets/bottom_navigation.dart';
+import '../../providers/auth_provider.dart';
 import '../../utils/responsive_utils.dart';
-import '../workout/workout_screen.dart';
-import '../workout/fullbody_workout_screen.dart';
-import '../workout/lowerbody_workout_screen.dart';
 import '../workout/ab_workout_screen.dart';
 import '../profile/profile_screen.dart';
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../workout/workout_screen.dart';
+import 'package:flutter/material.dart';
 import '../sleep/sleep_screen.dart';
+import '../profile/bmi_screen.dart';
 import '../meal/meal_screen.dart';
-import '../../providers/auth_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -288,7 +292,12 @@ class _HomeTabState extends State<HomeTab> with TickerProviderStateMixin {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    // TODO: Navigate to BMI details
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const BMIScreen(),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
@@ -310,20 +319,26 @@ class _HomeTabState extends State<HomeTab> with TickerProviderStateMixin {
             ),
           ),
           const SizedBox(width: 20),
-          CustomCircularProgressIndicator(
-            progress: 0.67, // 20.1 / 30 (normal BMI range)
-            size: 80,
-            color: Colors.white,
-            backgroundColor: Colors.white,
-            strokeWidth: 6,
-            child: Text(
-              "20.1",
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+          Consumer<ActivityProvider>(
+            builder: (context, activity, _) {
+              final bmi = activity.bmi;
+              final progress = (bmi / 30).clamp(0.0, 1.0);
+              return CustomCircularProgressIndicator(
+                progress: progress,
+                size: 80,
                 color: Colors.white,
-              ),
-            ),
+                backgroundColor: Colors.white,
+                strokeWidth: 6,
+                child: Text(
+                  bmi.toStringAsFixed(1),
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -453,17 +468,44 @@ class _HomeTabState extends State<HomeTab> with TickerProviderStateMixin {
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: _buildHeartRateCard()),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HealthMetricsScreen(),
+                    ),
+                  );
+                },
+                child: _buildHeartRateCard(),
+              ),
+            ),
             const SizedBox(width: 12),
             Expanded(
-              child: WaterIntakeWidget(
-                currentIntake: 4.0,
-                targetIntake: 8.0,
-                updates: [
-                  WaterIntakeUpdate(timeRange: "6am - 8am", amount: 700),
-                  WaterIntakeUpdate(timeRange: "4pm - now", amount: 1100),
-                  WaterIntakeUpdate(timeRange: "2pm - 4pm", amount: 500),
-                ],
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HealthMetricsScreen(),
+                    ),
+                  );
+                },
+                child: Consumer<ActivityProvider>(
+                  builder: (context, activity, _) => WaterIntakeWidget(
+                    currentIntake: activity.currentWaterIntakeL,
+                    targetIntake: activity.targetWaterIntakeL,
+                    updates: activity.waterUpdates
+                        .map(
+                          (e) => WaterIntakeUpdate(
+                            timeRange: e.timeRange,
+                            amount: e.amountMl,
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
               ),
             ),
           ],
@@ -472,17 +514,41 @@ class _HomeTabState extends State<HomeTab> with TickerProviderStateMixin {
         Row(
           children: [
             Expanded(
-              child: SleepPatternWidget(
-                sleepDuration: "8h 20m",
-                sleepPattern: [0.2, 0.4, 0.6, 0.8, 0.9, 0.7, 0.5, 0.3, 0.1],
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SleepScreen(),
+                    ),
+                  );
+                },
+                child: Consumer<ActivityProvider>(
+                  builder: (context, activity, _) => SleepPatternWidget(
+                    sleepDuration: activity.sleepDuration,
+                    sleepPattern: activity.sleepPattern,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: CaloriesProgressWidget(
-                currentCalories: 760,
-                targetCalories: 1010,
-                remainingCalories: 250,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HealthMetricsScreen(),
+                    ),
+                  );
+                },
+                child: Consumer<ActivityProvider>(
+                  builder: (context, activity, _) => CaloriesProgressWidget(
+                    currentCalories: activity.currentCalories,
+                    targetCalories: activity.targetCalories,
+                    remainingCalories: activity.remainingCalories,
+                  ),
+                ),
               ),
             ),
           ],
@@ -551,15 +617,17 @@ class _HomeTabState extends State<HomeTab> with TickerProviderStateMixin {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            "78 BPM",
-                            style: GoogleFonts.poppins(
-                              fontSize: ResponsiveUtils.getResponsiveFontSize(
-                                context,
-                                16,
+                          Consumer<ActivityProvider>(
+                            builder: (context, activity, _) => Text(
+                              "${activity.heartRate} BPM",
+                              style: GoogleFonts.poppins(
+                                fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                  context,
+                                  16,
+                                ),
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF6B73FF),
                               ),
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF6B73FF),
                             ),
                           ),
                           SizedBox(
@@ -585,16 +653,23 @@ class _HomeTabState extends State<HomeTab> with TickerProviderStateMixin {
                     SizedBox(
                       width: ResponsiveUtils.getResponsiveSize(context, 12),
                     ),
-                    SizedBox(
-                      width: ResponsiveUtils.getResponsiveSize(context, 60),
-                      height: ResponsiveUtils.getResponsiveSize(context, 30),
-                      child: LineChartWidget(
-                        data: [65, 70, 75, 78, 82, 79, 76, 73, 70, 68],
+                    Consumer<ActivityProvider>(
+                      builder: (context, activity, _) => SizedBox(
+                        width: ResponsiveUtils.getResponsiveSize(context, 60),
                         height: ResponsiveUtils.getResponsiveSize(context, 30),
-                        showGrid: false,
-                        showPoints: false,
-                        highlightIndex: 3,
-                        highlightLabel: "3mins ago",
+                        child: LineChartWidget(
+                          data: activity.heartRateHistory,
+                          height: ResponsiveUtils.getResponsiveSize(
+                            context,
+                            30,
+                          ),
+                          showGrid: false,
+                          showPoints: false,
+                          highlightIndex: activity.heartRateHistory.length > 3
+                              ? 3
+                              : null,
+                          highlightLabel: "3mins ago",
+                        ),
                       ),
                     ),
                   ],
@@ -626,58 +701,86 @@ class _HomeTabState extends State<HomeTab> with TickerProviderStateMixin {
           ],
         ),
         const SizedBox(height: 16),
-        Container(
-          height: 200, // Increased height for better graph display
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 15,
-                offset: const Offset(0, 4),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const WorkoutProgressScreen(),
               ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Progress",
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  Text(
-                    "0% - 100%",
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: LineChartWidget(
-                  data: [20, 35, 45, 60, 75, 85, 30],
-                  height: 140, // Increased height for better visibility
-                  showGrid: true,
-                  showPoints: true,
-                  highlightIndex: 5,
-                  highlightLabel: "Fri, 28 May\nUpperbody Workout\n90% ↑",
-                  lineColor: const Color(0xFF6B73FF),
-                  fillColor: const Color(0xFF6B73FF),
+            );
+          },
+          child: Container(
+            height: 200, // Increased height for better graph display
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 15,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Progress",
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    Text(
+                      "0% - 100%",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: Consumer<ActivityProvider>(
+                    builder: (context, activity, _) {
+                      List<double> data;
+                      switch (_selectedPeriod) {
+                        case 'Daily':
+                          data = activity.progressDaily;
+                          break;
+                        case 'Monthly':
+                          data = activity.progressMonthly;
+                          break;
+                        case 'Weekly':
+                        default:
+                          data = activity.progressWeekly;
+                      }
+                      return LineChartWidget(
+                        data: data,
+                        height: 140,
+                        showGrid: true,
+                        showPoints: true,
+                        highlightIndex: data.isNotEmpty
+                            ? data.length - 1
+                            : null,
+                        highlightLabel: _selectedPeriod,
+                        lineColor: const Color(0xFF6B73FF),
+                        fillColor: const Color(0xFF6B73FF),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],

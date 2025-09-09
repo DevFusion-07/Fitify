@@ -6,23 +6,26 @@ import '../utils/responsive_utils.dart';
 class SleepPatternWidget extends StatelessWidget {
   final String sleepDuration;
   final List<double> sleepPattern;
+  final double? height;
 
   const SleepPatternWidget({
     super.key,
     required this.sleepDuration,
     required this.sleepPattern,
+    this.height,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cardHeight = ResponsiveUtils.getCardHeight(context, 120);
-    final padding = ResponsiveUtils.getResponsivePadding(context, const EdgeInsets.all(12));
-    
+    final cardHeight = height ?? ResponsiveUtils.getCardHeight(context, 120);
+    final padding = ResponsiveUtils.getResponsivePadding(
+      context,
+      const EdgeInsets.all(12),
+    );
+
     return Container(
       height: cardHeight,
-      padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -33,68 +36,93 @@ class SleepPatternWidget extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.bedtime, color: const Color(0xFF6B73FF), size: 24),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  "Sleep",
-                  style: GoogleFonts.poppins(
-                    fontSize: ResponsiveUtils.getResponsiveFontSize(context, 14),
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        sleepDuration,
-                        style: GoogleFonts.poppins(
-                          fontSize: ResponsiveUtils.getResponsiveFontSize(context, 16),
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF6B73FF),
-                        ),
-                      ),
-                      SizedBox(height: ResponsiveUtils.getResponsiveSize(context, 4)),
-                      Text(
-                        "Sleep pattern",
-                        style: GoogleFonts.poppins(
-                          fontSize: ResponsiveUtils.getResponsiveFontSize(context, 10),
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            // Background (no image)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFF6B73FF).withOpacity(0.7),
+                      const Color(0xFF8B5CF6).withOpacity(0.7),
                     ],
                   ),
                 ),
-                SizedBox(width: ResponsiveUtils.getResponsiveSize(context, 12)),
-                // Sleep pattern graph
-                SizedBox(
-                  width: ResponsiveUtils.getResponsiveSize(context, 60),
-                  height: ResponsiveUtils.getResponsiveSize(context, 30),
-                  child: CustomPaint(
-                    painter: SleepPatternPainter(sleepPattern: sleepPattern),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+            // Content overlay
+            Positioned.fill(
+              child: Container(
+                padding: padding,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.bedtime, color: Colors.white, size: 24),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            "Sleep",
+                            style: GoogleFonts.poppins(
+                              fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                context,
+                                16,
+                              ),
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          sleepDuration,
+                          style: GoogleFonts.poppins(
+                            fontSize: ResponsiveUtils.getResponsiveFontSize(
+                              context,
+                              14,
+                            ),
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          // Full-width graph
+                          Positioned.fill(
+                            child: Image.asset(
+                              'assets/images/sleep/sleep_graph.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.08),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          // Removed overlay text; now in header row
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -119,7 +147,9 @@ class SleepPatternPainter extends CustomPainter {
 
     for (int i = 0; i < sleepPattern.length; i++) {
       final x = (i / (sleepPattern.length - 1)) * size.width;
-      final y = size.height / 2 + math.sin(sleepPattern[i] * math.pi * 2) * (size.height / 4);
+      final y =
+          size.height / 2 +
+          math.sin(sleepPattern[i] * math.pi * 2) * (size.height / 4);
       points.add(Offset(x, y));
     }
 
@@ -127,7 +157,7 @@ class SleepPatternPainter extends CustomPainter {
     for (int i = 1; i < points.length; i++) {
       final prevPoint = points[i - 1];
       final currentPoint = points[i];
-      
+
       // Create smooth curve
       final controlPoint1 = Offset(
         prevPoint.dx + (currentPoint.dx - prevPoint.dx) / 3,
@@ -137,11 +167,14 @@ class SleepPatternPainter extends CustomPainter {
         currentPoint.dx - (currentPoint.dx - prevPoint.dx) / 3,
         currentPoint.dy,
       );
-      
+
       path.cubicTo(
-        controlPoint1.dx, controlPoint1.dy,
-        controlPoint2.dx, controlPoint2.dy,
-        currentPoint.dx, currentPoint.dy,
+        controlPoint1.dx,
+        controlPoint1.dy,
+        controlPoint2.dx,
+        controlPoint2.dy,
+        currentPoint.dx,
+        currentPoint.dy,
       );
     }
 

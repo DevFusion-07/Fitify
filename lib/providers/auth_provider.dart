@@ -62,7 +62,11 @@ class AuthProvider with ChangeNotifier {
   }
 
   // Login user
-  Future<bool> login({required String email, required String password}) async {
+  Future<bool> login({
+    required String email,
+    required String password,
+    bool remember = false,
+  }) async {
     _setLoading(true);
     _error = null;
 
@@ -70,6 +74,7 @@ class AuthProvider with ChangeNotifier {
       final success = await _authService.login(
         email: email,
         password: password,
+        remember: remember,
       );
 
       if (success) {

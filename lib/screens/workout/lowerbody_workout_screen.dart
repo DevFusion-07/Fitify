@@ -14,8 +14,8 @@ class LowerBodyWorkoutScreen extends StatefulWidget {
 class _LowerBodyWorkoutScreenState extends State<LowerBodyWorkoutScreen> {
   final ScrollController _scrollController = ScrollController();
   double _headerHeight = 200;
-  final double _minHeaderHeight = 80;
-  final double _maxHeaderHeight = 200;
+  double _minHeaderHeight = 120;
+  double _maxHeaderHeight = 280;
   bool _isFavorite = false;
   final String _scheduledTime = "Today, 07:00 AM";
   String _selectedDifficulty = "Beginner";
@@ -128,195 +128,175 @@ class _LowerBodyWorkoutScreenState extends State<LowerBodyWorkoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    // Match Fullbody header sizing behavior
+    _maxHeaderHeight = screenHeight * 0.3;
+    _minHeaderHeight = screenHeight * 0.15;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      body: Stack(
-        children: [
-          // Header
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: _headerHeight,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF10B981), Color(0xFF059669)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFE8F4FD), Color(0xFFF8FAFF)],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(child: _buildScrollableContent()),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: _buildStartWorkoutButton(),
+    );
+  }
+
+  Widget _buildHeader() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: _headerHeight,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF10B981), Color(0xFF059669)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(screenWidth * 0.05),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(
+                    Icons.arrow_back_ios,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
+                if (_isHeaderCollapsed)
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        "Lower Body Workout",
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                IconButton(
+                  onPressed: () {},
+                  icon: const Icon(
+                    Icons.more_vert,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: Padding(
-                      padding: EdgeInsets.all(screenWidth * 0.05),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              IconButton(
-                                onPressed: () => Navigator.pop(context),
-                                icon: const Icon(
-                                  Icons.arrow_back_ios,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
+              ],
+            ),
+            if (!_isHeaderCollapsed) ...[
+              SizedBox(height: _headerHeight * 0.02),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: EdgeInsets.all(_headerHeight * 0.04),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 15,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: _headerHeight * 0.15,
+                              height: _headerHeight * 0.15,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withOpacity(0.1),
+                                shape: BoxShape.circle,
                               ),
-                              if (_isHeaderCollapsed)
-                                Expanded(
-                                  child: Center(
-                                    child: Text(
-                                      "Lower Body Workout",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              IconButton(
-                                onPressed: () {},
-                                icon: const Icon(
-                                  Icons.more_vert,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
+                              child: Icon(
+                                Icons.directions_run,
+                                color: const Color(0xFF10B981),
+                                size: _headerHeight * 0.08,
                               ),
-                            ],
-                          ),
-                          if (!_isHeaderCollapsed) ...[
-                            SizedBox(height: _headerHeight * 0.02),
+                            ),
+                            const SizedBox(width: 16),
                             Expanded(
-                              child: Row(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Expanded(
-                                    child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 200,
-                                      ),
-                                      padding: EdgeInsets.all(
-                                        _headerHeight * 0.04,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(16),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(
-                                              0.1,
-                                            ),
-                                            blurRadius: 15,
-                                            offset: const Offset(0, 8),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: _headerHeight * 0.15,
-                                            height: _headerHeight * 0.15,
-                                            decoration: BoxDecoration(
-                                              color: const Color(
-                                                0xFF10B981,
-                                              ).withOpacity(0.1),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: Icon(
-                                              Icons.directions_run,
-                                              color: const Color(0xFF10B981),
-                                              size: _headerHeight * 0.08,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text(
-                                                  "Lower Body Workout",
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize:
-                                                        _headerHeight * 0.06,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.black87,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  "Lower Body Focus | 9 Exercises | 28mins | 280 Calories Burn",
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize:
-                                                        _headerHeight * 0.035,
-                                                    color: Colors.grey.shade600,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          IconButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                _isFavorite = !_isFavorite;
-                                              });
-                                            },
-                                            icon: Icon(
-                                              _isFavorite
-                                                  ? Icons.favorite
-                                                  : Icons.favorite_border,
-                                              color: _isFavorite
-                                                  ? Colors.red
-                                                  : Colors.grey,
-                                              size: _headerHeight * 0.05,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                  Text(
+                                    "Lower Body Workout",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: _headerHeight * 0.06,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "Lower Body Focus | 9 Exercises | 28mins | 280 Calories Burn",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: _headerHeight * 0.035,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
                             ),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _isFavorite = !_isFavorite;
+                                });
+                              },
+                              icon: Icon(
+                                _isFavorite
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: _isFavorite ? Colors.red : Colors.grey,
+                                size: _headerHeight * 0.05,
+                              ),
+                            ),
                           ],
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ),
-          // Scrollable content
-          Positioned(
-            top: _headerHeight,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _buildScrollableContent(),
-          ),
-          // Start workout button
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildStartWorkoutButton(),
-          ),
-        ],
+            ],
+          ],
+        ),
       ),
     );
   }

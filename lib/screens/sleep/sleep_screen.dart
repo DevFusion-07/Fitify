@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../utils/app_constants.dart';
 import '../../widgets/common_widgets.dart';
+import 'package:provider/provider.dart';
+import '../../widgets/sleep_pattern_widget.dart';
+import '../../providers/activity_provider.dart';
+import 'sleep_schedule_screen.dart';
 
 class SleepScreen extends StatefulWidget {
   const SleepScreen({super.key});
@@ -42,10 +46,6 @@ class _SleepScreenState extends State<SleepScreen> {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
@@ -60,9 +60,29 @@ class _SleepScreenState extends State<SleepScreen> {
           children: [
             _buildSleepOverview(),
             const SizedBox(height: 24),
-            _buildSleepChart(),
+            _buildSleepScheduleCard(),
             const SizedBox(height: 24),
-            _buildSleepControls(),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final double gap = 16;
+                final double cardSize = (constraints.maxWidth - gap) / 2;
+                return Row(
+                  children: [
+                    SizedBox(
+                      width: cardSize,
+                      height: cardSize,
+                      child: _buildSleepChart(cardSize),
+                    ),
+                    SizedBox(width: gap),
+                    SizedBox(
+                      width: cardSize,
+                      height: cardSize,
+                      child: _buildSleepControlsSquare(cardSize),
+                    ),
+                  ],
+                );
+              },
+            ),
             const SizedBox(height: 24),
             _buildSleepStats(),
             const SizedBox(height: 24),
@@ -75,10 +95,76 @@ class _SleepScreenState extends State<SleepScreen> {
     );
   }
 
+  Widget _buildSleepScheduleCard() {
+    return CommonCard(
+      backgroundColor: Colors.white,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Daily Sleep Schedule',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SleepScheduleScreen(),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.shade400, Colors.purple.shade400],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.withOpacity(0.3),
+                      spreadRadius: 1,
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  'Check',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSleepOverview() {
-    final avgSleepHours = weeklySleepData
-        .map((data) => data['hours'] as double)
-        .reduce((a, b) => a + b) / weeklySleepData.length;
+    final avgSleepHours =
+        weeklySleepData
+            .map((data) => data['hours'] as double)
+            .reduce((a, b) => a + b) /
+        weeklySleepData.length;
 
     return CommonCard(
       backgroundColor: Colors.white,
@@ -164,10 +250,10 @@ class _SleepScreenState extends State<SleepScreen> {
             color: AppColors.primary,
           ),
           items: ['Daily', 'Weekly', 'Monthly']
-              .map((period) => DropdownMenuItem(
-                    value: period,
-                    child: Text(period),
-                  ))
+              .map(
+                (period) =>
+                    DropdownMenuItem(value: period, child: Text(period)),
+              )
               .toList(),
           onChanged: (value) {
             setState(() {
@@ -179,7 +265,12 @@ class _SleepScreenState extends State<SleepScreen> {
     );
   }
 
-  Widget _buildSleepMetric(String label, String value, IconData icon, Color color) {
+  Widget _buildSleepMetric(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -211,102 +302,156 @@ class _SleepScreenState extends State<SleepScreen> {
     );
   }
 
-  Widget _buildSleepChart() {
+  Widget _buildSleepChart([double? forcedSize]) {
+    final title = Text(
+      'Sleep Pattern',
+      style: GoogleFonts.poppins(
+        fontWeight: FontWeight.w600,
+        fontSize: 16,
+        color: AppColors.textPrimary,
+      ),
+      overflow: TextOverflow.ellipsis,
+    );
+
+    if (forcedSize != null) {
+      // Square variant: fit contents within fixed size to avoid overflow
+      return CommonCard(
+        backgroundColor: Colors.white,
+        child: SizedBox(
+          width: forcedSize,
+          height: forcedSize,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DefaultTextStyle.merge(
+                style: const TextStyle(fontSize: 16),
+                child: title,
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Consumer<ActivityProvider>(
+                    builder: (context, activity, _) => SleepPatternWidget(
+                      sleepDuration: activity.sleepDuration,
+                      sleepPattern: activity.sleepPattern,
+                      height: forcedSize * 0.65,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return CommonCard(
       backgroundColor: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Sleep Pattern',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              fontSize: 18,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 20),
+          title,
+          const SizedBox(height: 12),
           SizedBox(
-            height: 200,
-            child: _buildSleepChartWidget(),
+            height: 220,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Consumer<ActivityProvider>(
+                builder: (context, activity, _) => SleepPatternWidget(
+                  sleepDuration: activity.sleepDuration,
+                  sleepPattern: activity.sleepPattern,
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSleepChartWidget() {
-    return CustomPaint(
-      painter: SleepChartPainter(weeklySleepData),
-      child: Container(),
-    );
-  }
+  // Removed custom chart painter in favor of reusable SleepPatternWidget
 
-  Widget _buildSleepControls() {
+  // replaced by _buildSleepControlsSquare for square layout
+
+  Widget _buildSleepControlsSquare(double size) {
     return CommonCard(
       backgroundColor: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Sleep Tracking',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              fontSize: 18,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Center(
-            child: GestureDetector(
-              onTap: _toggleSleepTracking,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: isSleeping ? AppColors.error : AppColors.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: (isSleeping ? AppColors.error : AppColors.primary)
-                          .withOpacity(0.3),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  isSleeping ? Icons.stop : Icons.bedtime,
-                  color: Colors.white,
-                  size: 48,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: Text(
-              isSleeping ? 'Stop Sleep Tracking' : 'Start Sleep Tracking',
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Sleep Tracking',
               style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
                 fontSize: 16,
                 color: AppColors.textPrimary,
               ),
             ),
-          ),
-          if (isSleeping) ...[
-            const SizedBox(height: 16),
-            Center(
-              child: Text(
-                'Sleeping since ${_formatTime(sleepStartTime!)}',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
+            const SizedBox(height: 8),
+            Expanded(
+              child: Center(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: _toggleSleepTracking,
+                  child: Container(
+                    width: size * 0.34,
+                    height: size * 0.34,
+                    decoration: BoxDecoration(
+                      color: isSleeping ? AppColors.error : AppColors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              (isSleeping ? AppColors.error : AppColors.primary)
+                                  .withOpacity(0.3),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      isSleeping ? Icons.stop : Icons.bedtime,
+                      color: Colors.white,
+                      size: size * 0.17,
+                    ),
+                  ),
                 ),
               ),
             ),
+            const SizedBox(height: 6),
+            Center(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _toggleSleepTracking,
+                child: Text(
+                  isSleeping ? 'Stop Sleep Tracking' : 'Start Sleep Tracking',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                    color: AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            if (isSleeping) ...[
+              const SizedBox(height: 4),
+              Center(
+                child: Text(
+                  'Sleeping since ${_formatTime(sleepStartTime ?? DateTime.now())}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -360,12 +505,7 @@ class _SleepScreenState extends State<SleepScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildStatCard(
-                  'Awake',
-                  '30m',
-                  '5%',
-                  AppColors.warning,
-                ),
+                child: _buildStatCard('Awake', '30m', '5%', AppColors.warning),
               ),
             ],
           ),
@@ -374,7 +514,12 @@ class _SleepScreenState extends State<SleepScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String duration, String percentage, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String duration,
+    String percentage,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -471,11 +616,7 @@ class _SleepScreenState extends State<SleepScreen> {
               color: tip['color'].withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              tip['icon'],
-              color: tip['color'],
-              size: 24,
-            ),
+            child: Icon(tip['icon'], color: tip['color'], size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -537,7 +678,9 @@ class _SleepScreenState extends State<SleepScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          ...weeklySleepData.take(5).map((data) => _buildSleepHistoryItem(data)),
+          ...weeklySleepData
+              .take(5)
+              .map((data) => _buildSleepHistoryItem(data)),
         ],
       ),
     );
@@ -688,6 +831,19 @@ class _SleepScreenState extends State<SleepScreen> {
             ),
             const SizedBox(height: 20),
             ListTile(
+              leading: const Icon(Icons.schedule, color: AppColors.primary),
+              title: Text('Sleep Schedule', style: GoogleFonts.poppins()),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SleepScheduleScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.settings, color: AppColors.primary),
               title: Text('Sleep Settings', style: GoogleFonts.poppins()),
               onTap: () => Navigator.pop(context),
@@ -698,7 +854,10 @@ class _SleepScreenState extends State<SleepScreen> {
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
-              leading: const Icon(Icons.notifications, color: AppColors.primary),
+              leading: const Icon(
+                Icons.notifications,
+                color: AppColors.primary,
+              ),
               title: Text('Sleep Reminders', style: GoogleFonts.poppins()),
               onTap: () => Navigator.pop(context),
             ),
@@ -716,64 +875,4 @@ class _SleepScreenState extends State<SleepScreen> {
   }
 }
 
-class SleepChartPainter extends CustomPainter {
-  final List<Map<String, dynamic>> data;
-
-  SleepChartPainter(this.data);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.primary
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    final fillPaint = Paint()
-      ..color = AppColors.primary.withOpacity(0.1)
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    final fillPath = Path();
-
-    final maxHours = data.map((d) => d['hours'] as double).reduce((a, b) => a > b ? a : b);
-    final stepX = size.width / (data.length - 1);
-    final stepY = size.height / maxHours;
-
-    // Create the line path
-    for (int i = 0; i < data.length; i++) {
-      final x = i * stepX;
-      final y = size.height - (data[i]['hours'] as double) * stepY;
-
-      if (i == 0) {
-        path.moveTo(x, y);
-        fillPath.moveTo(x, size.height);
-        fillPath.lineTo(x, y);
-      } else {
-        path.lineTo(x, y);
-        fillPath.lineTo(x, y);
-      }
-    }
-
-    // Complete the fill path
-    fillPath.lineTo(size.width, size.height);
-    fillPath.close();
-
-    // Draw fill and stroke
-    canvas.drawPath(fillPath, fillPaint);
-    canvas.drawPath(path, paint);
-
-    // Draw data points
-    final pointPaint = Paint()
-      ..color = AppColors.primary
-      ..style = PaintingStyle.fill;
-
-    for (int i = 0; i < data.length; i++) {
-      final x = i * stepX;
-      final y = size.height - (data[i]['hours'] as double) * stepY;
-      canvas.drawCircle(Offset(x, y), 4, pointPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+// Replaced by SleepPatternWidget for consistency with Home

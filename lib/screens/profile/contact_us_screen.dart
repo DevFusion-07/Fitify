@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/styled_dropdown.dart';
 
 class ContactUsScreen extends StatefulWidget {
   const ContactUsScreen({super.key});
@@ -245,30 +246,20 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                     const SizedBox(height: 16),
 
                     // Category Dropdown
-                    DropdownButtonFormField<String>(
+                    StyledDropdown<String>(
                       value: _selectedCategory,
-                      decoration: InputDecoration(
-                        labelText: 'Category',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF6B73FF),
-                          ),
-                        ),
-                      ),
-                      items: _categories.map((category) {
-                        return DropdownMenuItem(
-                          value: category,
-                          child: Text(category),
-                        );
-                      }).toList(),
+                      hintText: 'Category',
+                      items: _categories
+                          .map(
+                            (category) => DropdownMenuItem(
+                              value: category,
+                              child: Text(category),
+                            ),
+                          )
+                          .toList(),
                       onChanged: (value) {
                         setState(() {
-                          _selectedCategory = value!;
+                          _selectedCategory = value ?? _selectedCategory;
                         });
                       },
                     ),
